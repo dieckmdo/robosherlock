@@ -59,7 +59,7 @@ UnrealVisionBridge::~UnrealVisionBridge()
 
 void UnrealVisionBridge::readConfig(const boost::property_tree::ptree &pt)
 {
-  address = pt.get<std::string>("server.address", "127.0.0.1");
+  address = pt.get<std::string>("server.address", "192.168.178.32");
   port = (uint16_t)pt.get<int>("server.port", 10000);
   tfFrom = pt.get<std::string>("tf.from", "unreal_vision_optical_frame");
   tfTo = pt.get<std::string>("tf.to", "map");
