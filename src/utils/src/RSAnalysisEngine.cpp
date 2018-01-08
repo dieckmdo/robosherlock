@@ -20,7 +20,7 @@
 #include <rs/utils/RSAnalysisEngine.h>
 
 
-RSAnalysisEngine::RSAnalysisEngine() : engine(NULL), cas(NULL)
+RSAnalysisEngine::RSAnalysisEngine() : engine(NULL), cas(NULL), rspm(NULL)
 {
 }
 
@@ -36,6 +36,11 @@ RSAnalysisEngine::~RSAnalysisEngine()
     delete engine;
     engine = NULL;
   }
+  if(rspm)
+  {
+    delete rspm;
+    rspm = NULL;
+  }
 }
 
 void RSAnalysisEngine::init(const std::string &file)
@@ -44,13 +49,11 @@ void RSAnalysisEngine::init(const std::string &file)
 
   size_t pos = file.rfind('/');
   outInfo("Creating analysis engine: " FG_BLUE << (pos == file.npos ? file : file.substr(pos)));
-
   engine = uima::Framework::createAnalysisEngine(file.c_str(), errorInfo);
-
   if(errorInfo.getErrorId() != UIMA_ERR_NONE)
   {
     outError("createAnalysisEngine failed.");
-    throw uima::Exception(errorInfo);
+    throw std::runtime_error("An error occured during initializations;");
   }
   const uima::AnalysisEngineMetaData &data = engine->getAnalysisEngineMetaData();
   data.getName().toUTF8String(name);
@@ -70,6 +73,11 @@ void RSAnalysisEngine::init(const std::string &file)
 
   outInfo("initialization done: " << name << std::endl
           << std::endl << FG_YELLOW << "********************************************************************************" << std::endl);
+}
+
+void RSAnalysisEngine::initPipelineManager()
+{
+  rspm = new RSPipelineManager(engine);
 }
 
 void RSAnalysisEngine::stop()
