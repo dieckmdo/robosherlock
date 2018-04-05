@@ -130,7 +130,7 @@ public:
     {
       ctx.extractValue("query_mln", queryMLN);
     }
-    
+
     if(ctx.isParameterDefined("fuzzy"))
     {
       ctx.extractValue("fuzzy", fuzzy_);
@@ -170,7 +170,7 @@ public:
     outInfo("process start");
     rs::SceneCas cas(tcas);
     rs::Scene scene = cas.getScene();
-    cas.get(VIEW_COLOR_IMAGE_HD,dispRgb);
+    cas.get(VIEW_COLOR_IMAGE_HD, dispRgb);
     std::vector<rs::Cluster> clusters;
     scene.identifiables.filter(clusters);
     outInfo("iterating over clusters");
@@ -187,14 +187,18 @@ public:
       std::vector<rs::SemanticColor> color;
       std::vector<rs::Goggles> goggles;
       std::vector<rs::Detection> detections;
-
+      std::vector<rs::Classification> classifications;
       std::vector<rs::SemanticSize> semSize;
+
+      std::vector<rs::GroundTruth> gt;
 
       it->annotations.filter(shape);
       it->annotations.filter(color);
       it->annotations.filter(goggles);
       it->annotations.filter(detections);
       it->annotations.filter(semSize);
+      it->annotations.filter(classifications);
+      it->annotations.filter(gt);
 
       if(shape.size() > 0)
       {
@@ -202,7 +206,7 @@ public:
         for(int i = 0; i < shape.size(); ++i)
         {
           mlnDatabase << generateAtom("shape", index, shape[i].shape(), shape[i].confidence()) << std::endl;
-          atoms.push_back(generateAtom("shape", index, shape[i].shape(),shape[i].confidence()));
+          atoms.push_back(generateAtom("shape", index, shape[i].shape(), shape[i].confidence()));
         }
       }
       if(semSize.size() > 0)
@@ -226,8 +230,8 @@ public:
           {
             if(ratio[j] > 0.30)
             {
-              mlnDatabase << generateAtom("color", index, temp[j],ratio[j]) << std::endl;
-              atoms.push_back(generateAtom("color", index, temp[j],ratio[j]));
+              mlnDatabase << generateAtom("color", index, temp[j], ratio[j]) << std::endl;
+              atoms.push_back(generateAtom("color", index, temp[j], ratio[j]));
             }
 
           }
@@ -249,7 +253,7 @@ public:
           }
 
           std::string title = goggles[i].title();
-          title.erase(std::remove_if(title.begin(), title.end(), my_predicate), title.end());          
+          title.erase(std::remove_if(title.begin(), title.end(), my_predicate), title.end());
 
           atoms.push_back(generateAtom(predicate.str(), index, title));
           mlnDatabase << generateAtom(predicate.str(), index, title) << std::endl;
@@ -260,11 +264,44 @@ public:
         outDebug("No. of Detection annotations :" << detections.size());
         for(int i = 0; i < detections.size(); ++i)
         {
-//          atom << "instance(c" << index << "," << detections[i].name() << ")";
-          atoms.push_back(generateAtom("detection",index,detections[i].name() ,detections[i].confidence()));
-          mlnDatabase << generateAtom("detection",index,detections[i].name() ,detections[i].confidence()) << std::endl;
+          //          atom << "instance(c" << index << "," << detections[i].name() << ")";
+          atoms.push_back(generateAtom("detection", index, detections[i].name() , detections[i].confidence()));
+          mlnDatabase << generateAtom("detection", index, detections[i].name() , detections[i].confidence()) << std::endl;
         }
       }
+      if(classifications.size() > 0)
+      {
+        for(auto c : classifications)
+        {
+          float confidence = 1.0f;
+          for(auto conf : c.confidences())
+            if(c.classname() == conf.name())
+              confidence = conf.score();
+          std::string cType = c.classification_type();
+          if(cType == "SHAPE")
+          {
+            atoms.push_back(generateAtom("shape", index, c.classname(), confidence));
+            mlnDatabase << generateAtom("shape", index, c.classname(), confidence)     << std::endl;
+          }
+          else if(cType == "CLASS")
+          {
+            atoms.push_back(generateAtom("class", index, c.classname(), confidence));
+            mlnDatabase << generateAtom("class", index, c.classname(), confidence)     << std::endl;
+          }
+          else if(cType == "INSTANCE")
+          {
+            atoms.push_back(generateAtom("instance", index, c.classname(), confidence));
+            mlnDatabase << generateAtom("instance", index, c.classname(), confidence)     << std::endl;
+          }
+        }
+      }
+      if(gt.size() > 0)
+      {
+        rs::GroundTruth groundTruth = gt[0];
+        std::string classNameGT = groundTruth.classificationGT().classname();
+        atoms.push_back(generateAtom("object", index, classNameGT, 1.0));
+      }
+
       mln_atoms.atoms.append(atoms);
       it->annotations.append(mln_atoms);
 
@@ -279,6 +316,11 @@ public:
       //save atoms to a file
       if(save)
       {
+        bool isLast = false;
+        if (index == (clusters.size() - 1))
+        {
+          isLast = true;
+        }
         //location is only needed for the first cluster
         if(index == 0)
         {
@@ -290,16 +332,16 @@ public:
           {
             outInfo("We have location annotation");
             outInfo(tf_loc[0].frame_id());
-            save_to_file(mln_atoms, scene, tf_loc[0].frame_id());
+            save_to_file(mln_atoms, scene, isLast, tf_loc[0].frame_id());
           }
           else
           {
-            save_to_file(mln_atoms, scene);
+            save_to_file(mln_atoms, scene, isLast);
           }
         }
         else
         {
-          save_to_file(mln_atoms, scene);
+          save_to_file(mln_atoms, scene, isLast);
         }
       }
       drawAtoms(*it, tcas, atoms);
@@ -352,12 +394,12 @@ private:
   {
     std::stringstream atom;
     std::stringstream conf;
-    conf<<confidence<<" ";
-    atom << (fuzzy_ ? conf.str():"")<<type << "(c" << index << "," << (wordnetGrounded ? wordnetMapping[evidence]:evidence) << ")";
+    conf << confidence << " ";
+    atom << (fuzzy_ ? conf.str() : "") << type << "(c" << index << "," << (wordnetGrounded ? wordnetMapping[evidence] : evidence) << ")";
     return atom.str();
   }
 
-  void save_to_file(rs::MLNAtoms mln_atoms, rs::Scene &scene, std::string loc = "")
+  void save_to_file(rs::MLNAtoms mln_atoms, rs::Scene &scene, bool isLast, std::string loc = "")
   {
 
     outDebug("Appending to file: " << filenameMLN.str());
@@ -379,7 +421,11 @@ private:
     {
       mln_atoms_str << atoms[i] << std::endl;
     }
-    mln_atoms_str << "---" << std::endl;
+    if (isLast)
+    {
+      outInfo("I am really the last cluster and wil append ---");
+      mln_atoms_str << "---" << std::endl;
+    }
     mln_atoms_str << std::endl;
     mln_file << mln_atoms_str.str();
 
@@ -419,3 +465,4 @@ private:
 
 // This macro exports an entry point that is used to create the annotator.
 MAKE_AE(MLNInferencer)
+
