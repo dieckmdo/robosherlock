@@ -164,7 +164,7 @@
       <nameValuePair>
         <name>storagedb</name>
         <value>
-          <string>Scenes</string>
+          <string>Scenes_unreal_34</string>
         </value>
       </nameValuePair>
       <nameValuePair>
@@ -175,6 +175,8 @@
             <string>depth_image_hd</string>
             <string>camera_info</string>
             <string>camera_info_hd</string>
+            <string>object_image_hd</string>
+            <string>object_map</string>
             <string>scene</string>
           </array>
         </value>
@@ -189,7 +191,7 @@
         <name>camera_config_files</name>
 	<value>
 	  <array>
-            <string>config_kinect_robot.ini</string>
+            <string>config_unreal_vision.ini</string>
 	  </array>
 	</value>
       </nameValuePair>
