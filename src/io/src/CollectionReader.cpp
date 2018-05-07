@@ -39,6 +39,7 @@
 #include <rs/io/ROSThermalCamBridge.h>
 #include <rs/io/MongoDBBridge.h>
 #include <rs/io/UnrealVisionBridge.h>
+#include <rs/io/UnrealROSIntegrationVisionBridge.h>
 #include <rs/io/DataLoaderBridge.h>
 #include <rs/utils/time.h>
 #include <rs/utils/exception.h>
@@ -102,7 +103,7 @@ private:
     return "";
   }
 
-  void readConfig(const std::string &file)
+  void  readConfig(const std::string &file)
   {
     const std::string &configFile = getFilePath(file);
     if(configFile.empty())
@@ -148,6 +149,10 @@ private:
       else if(interface_ == "UnrealVision")
       {
         cameras_.push_back(new UnrealVisionBridge(pt));
+      }
+      else if(interface_ == "UnrealROSIntegrationVision")
+      {
+        cameras_.push_back(new UnrealROSIntegrationVisionBridge(pt));
       }
       else if(interface_ == "DataLoader")
       {
@@ -236,6 +241,30 @@ public:
 
     thread_ = std::thread(&TFBroadcasterWrapper::run, &broadCasterObject_);
 
+    //this needs to be set in order to rewrite parameters
+    setAnnotatorContext(ctx);
+
+    return UIMA_ERR_NONE;
+  }
+
+
+  TyErrorId reconfigure()
+  {
+    outError("Reconfiguring");
+    AnnotatorContext &ctx = getAnnotatorContext();
+    if(ctx.isParameterDefined("camera_config_files"))
+    {
+      for(size_t i = 0; i < cameras_.size(); ++i)
+        delete cameras_[i];
+
+      std::vector<std::string *> configs;
+      ctx.extractValue("camera_config_files", configs);
+      for(size_t i = 0; i < configs.size(); ++i)
+      {
+        outError(*configs[i]);
+        readConfig(*configs[i]);
+      }
+    }
     return UIMA_ERR_NONE;
   }
 
@@ -277,8 +306,18 @@ public:
     rs::Query qs = rs::create<rs::Query>(tcas);
     if(cas.getFS("QUERY", qs))
     {
-      outWarn("TIMESTAMP SET IN runAE: " << qs.timestamp());
-      timestamp = qs.timestamp();
+        std::string jsonString  = qs.asJson();
+        int loc = jsonString.find("timestamp");
+        std::string newTS;
+
+        if (loc != std::string::npos)
+        {
+          std::string temp = jsonString.substr(loc+12, jsonString.size());
+          newTS = temp.substr(0,temp.find_first_of("\""));
+          outInfo(newTS);
+          if(newTS!="")
+            timestamp = atoi(newTS.c_str());
+        }
     }
 
     outInfo("waiting for all cameras to have new data...");
@@ -312,6 +351,7 @@ public:
 
     return UIMA_ERR_NONE;
   }
+
 };
 
 // This macro exports an entry point that is used to create the annotator.

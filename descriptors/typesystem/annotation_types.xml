@@ -102,6 +102,23 @@
       </features>
     </typeDescription>
     <typeDescription>
+      <name>rs.annotation.TransparentSegment</name>
+      <description>Segment supposed to be transparent</description>
+      <supertypeName>rs.core.Annotation</supertypeName>
+      <features>
+        <featureDescription>
+          <name>segment</name>
+          <description></description>
+          <rangeTypeName>rs.annotation.Segment</rangeTypeName>
+        </featureDescription>
+        <featureDescription>
+          <name>source</name>
+          <description/>
+          <rangeTypeName>uima.cas.String</rangeTypeName>
+        </featureDescription>
+      </features>
+    </typeDescription>
+    <typeDescription>
       <name>rs.annotation.Board</name>
       <description>Annotation for chess and circle boards</description>
       <supertypeName>rs.core.Annotation</supertypeName>
@@ -295,7 +312,7 @@
       <features>
         <featureDescription>
           <name>classification_type</name>
-          <description/>
+          <description>INSTANCE or CLASS or SHAPE</description>
           <rangeTypeName>uima.cas.String</rangeTypeName>
         </featureDescription>
         <featureDescription>
@@ -315,7 +332,7 @@
         </featureDescription>
         <featureDescription>
           <name>parameters</name>
-          <description>params used during testing</description>
+          <description>parameters of the trained classifiers, preferably as a json string</description>
           <rangeTypeName>uima.cas.String</rangeTypeName>
         </featureDescription>
         <featureDescription>
