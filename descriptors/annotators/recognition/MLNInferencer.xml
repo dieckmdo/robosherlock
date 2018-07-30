@@ -49,7 +49,7 @@
       <nameValuePair>
         <name>save_to_file</name>
         <value>
-          <boolean>true</boolean>
+          <boolean>false</boolean>
         </value>
       </nameValuePair>
       <nameValuePair>

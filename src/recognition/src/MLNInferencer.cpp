@@ -316,7 +316,11 @@ public:
       //save atoms to a file
       if(save)
       {
-        bool isLast = false;
+        bool isLast, isFirst = false;
+        if (index == 0)
+        {
+          isFirst = true;
+        }
         if (index == (clusters.size() - 1))
         {
           isLast = true;
@@ -332,16 +336,16 @@ public:
           {
             outInfo("We have location annotation");
             outInfo(tf_loc[0].frame_id());
-            save_to_file(mln_atoms, scene, isLast, tf_loc[0].frame_id());
+            save_to_file(mln_atoms, scene, isFirst, isLast, tf_loc[0].frame_id());
           }
           else
           {
-            save_to_file(mln_atoms, scene, isLast);
+            save_to_file(mln_atoms, scene, isFirst, isLast);
           }
         }
         else
         {
-          save_to_file(mln_atoms, scene, isLast);
+          save_to_file(mln_atoms, scene, isFirst, isLast);
         }
       }
       drawAtoms(*it, tcas, atoms);
@@ -399,7 +403,7 @@ private:
     return atom.str();
   }
 
-  void save_to_file(rs::MLNAtoms mln_atoms, rs::Scene &scene, bool isLast, std::string loc = "")
+  void save_to_file(rs::MLNAtoms mln_atoms, rs::Scene &scene,bool isFirst, bool isLast, std::string loc = "")
   {
 
     outDebug("Appending to file: " << filenameMLN.str());
@@ -417,13 +421,17 @@ private:
       mln_atoms_str << "---" << std::endl;
       //mln_atoms_str << "scene(" << location_mapping[loc] << ")" << std::endl << std::endl;
     }
+    if (isFirst)
+    {
+      mln_atoms_str << "1 scene(fridge)" << std::endl;
+    }
+
     for(int i = 0; i < atoms.size(); ++i)
     {
       mln_atoms_str << atoms[i] << std::endl;
     }
     if (isLast)
     {
-      outInfo("I am really the last cluster and wil append ---");
       mln_atoms_str << "---" << std::endl;
     }
     mln_atoms_str << std::endl;
