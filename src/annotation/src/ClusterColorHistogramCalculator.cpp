@@ -169,7 +169,7 @@ private:
       }
     }
 
-
+    found = true;
     scene.identifiables.filter(clusters);
     clusterRois.resize(clusters.size());
     colorIds.resize(clusters.size(), std::vector<int>(COUNT));
