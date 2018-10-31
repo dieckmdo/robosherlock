@@ -64,27 +64,27 @@
       <nameValuePair>
         <name>threshold</name>
         <value>
-          <float>75</float>
+          <float>50</float>
         </value>
       </nameValuePair>
 
       <nameValuePair>
         <name>hsvThreshold</name>
         <value>
-          <float>100</float>
+          <float>70</float>
         </value>
       </nameValuePair>
 
       <nameValuePair>
         <name>minSize</name>
         <value>
-          <integer>500</integer>
+          <integer>200</integer>
         </value>
       </nameValuePair>
       <nameValuePair>
         <name>minHoleSize</name>
         <value>
-          <integer>40000</integer>
+          <integer>30000</integer>
         </value>
       </nameValuePair>
 

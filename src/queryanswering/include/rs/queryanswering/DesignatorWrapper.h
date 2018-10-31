@@ -110,8 +110,8 @@ public:
       convertAll(semanticColors, &objectDesignator);
       convertAll(shapes, &objectDesignator);
       convertAll(locations, &objectDesignator);
-      convertAll(atoms, &objectDesignator);
-      convertAll(goggles, &objectDesignator);
+      //convertAll(atoms, &objectDesignator);
+      //convertAll(goggles, &objectDesignator);
       convertAll(features, &objectDesignator);
       convertAll(clusterParts, &objectDesignator);
       convertAll(classification, &objectDesignator);
